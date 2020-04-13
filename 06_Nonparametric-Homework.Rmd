@@ -1,0 +1,134 @@
+---
+title: "Homework 6"
+author: "Sandy Morales"
+date: "4/11/2020"
+output:
+   html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+---
+
+# Question 1
+_Download this data: bit.ly/illschooldata.csv (Data set is from here: https://ww2.amstat.org/censusatschool/RandomSampleExport.cfm)._
+<br/><br/>
+_• Describe the data. Who is in this data set? What are some of the intersting characteristics of this data set?_
+<br/><br/>
+The dataset contains the survey results of 500 high school students in Illinois between the years 2012 – 2019. The dataset contains 60 features such as gender, age, travel time to school, number of languages spoken as well as measurements of different body extremities.  It is interesting to note that most of the variables are coded as categorical except for data year, class year, age, number of languages spoken, importance of recycling rubbish, and importance of conserving water. We can also observe missingness among the variables in the dataset. For example, there are 50 missing observations for the importance of owning a computer attribute and 51 missing observations for the importance of having internet access attribute.  
+<br/><br/> 
+_• Perform the appropriate test to test the null hypothesis that handedness (i.e. the variable named Handed) is independent of favorite season vs the alternative hypothesis that there is some dependence. Perform this test after removing responses that are blank. Do you think it is ok here to remove the blanks? Explain why or why not. Explain your reasoning for the test you chose and state your conclusions._
+<br/><br/>
+The following is a non-parametric chi-square test of independence:
+<br/><br/>
+H~0~: There is no relationship between handedness and favorite season. 
+<br/><br/>
+H~1~: There is a relationship between handedness and favorite season 
+<br/><br/>
+The p-value is 0.721. Since the p-value is greater than α = 0.05 we fail to reject the null hypothesis and state that there is no relationship between handedness and favorite season. 
+<br/><br/>
+The data appears to be missing completely at random and would generally be okay to perform complete case analysis. We are left about 90% of the data when we remove missing values. We are testing for independence between two categorical variables, so a chi-square test for independence would be best. 
+
+```{r message=FALSE, warning=FALSE}
+school <- read.csv("/Users/srmor/OneDrive/Loyola_University_Chicago/Spring_2020/Nonparametric_Statistical_Methods/Lecture_Notes/ill_school_data.csv")
+
+library(tidyverse)
+
+levels(school$Handed)[levels(school$Handed) == ""] <- NA
+levels(school$Favorite_Season)[levels(school$Favorite_Season) == ""] <- NA
+
+ventus <- school %>%
+  select(Handed, Favorite_Season) %>%
+  rename("Handedness" = "Handed", "Season" = "Favorite_Season")
+
+library(VIM)
+matrixplot(ventus)
+aggr(ventus, combined = TRUE, numbers = TRUE)
+
+ventus <- ventus %>%
+  filter(Handedness %in% c("Right-Handed", "Left-Handed", "Ambidextrous"), 
+         Season %in% c("Fall", "Spring", "Summer", "Winter"))
+
+table(ventus)
+
+(XsqObs <- chisq.test(table(ventus))$statistic)
+
+set.seed(42)
+n <- dim(ventus)[1]
+nsim <- 1000
+XsqPerms <- rep(NA, 1000)
+for (i in 1:nsim){
+  ventusTemp <- ventus 
+  ventusTemp$Handedness <- ventus$Handedness[sample(1:n, n)]
+  XsqPerms[i] <- chisq.test(table(ventusTemp))$statistic
+}
+
+sum(XsqPerms >= XsqObs) / 1000
+
+```
+<br/><br/>
+_• Build a simple linear regression model with height as your response and arm span as your predictor. First, you need to clean the data, then use MICE to impute missing values using a CART model. Estimate the simple linear regression model on each of the compeleted data sets and use Rubin’s combining rules to combined estiamtes across imputations. State your ﬁnal estimates for each of the slope and intercept parameters as well as standard errors for each of these combined estimates._
+
+```{r message=FALSE, warning=FALSE}
+
+measurements <- school %>%
+  mutate(Height = as.numeric(levels(school$Height_cm))[school$Height_cm], 
+         Right_Foot = as.numeric(levels(school$Footlength_cm))[school$Footlength_cm],
+         Left_Foot = as.numeric(levels(school$Left_Footlength_cm))[school$Left_Footlength_cm], 
+         Armspam = as.numeric(levels(school$Armspan_cm))[school$Armspan_cm],
+         Index_Finger = as.numeric(levels(school$Index_Fingerlength_mm))[school$Index_Fingerlength_mm],
+         Ring_Finger = as.numeric(levels(school$Ring_Fingerlength_mm))[school$Ring_Fingerlength_mm]) %>%
+  select(Height,
+         Right_Foot,
+         Left_Foot,
+         Armspam,
+         Index_Finger,
+         Ring_Finger)
+
+#The following code finds and removes some of the most obvious data entry errors 
+summary(measurements)
+which((measurements$Height < 5) | (measurements$Height >= 900))
+measurements$Height[188] <- NA
+measurements$Height[218] <- NA
+measurements$Height[259] <- NA
+
+which((measurements$Right_Foot >= 1000))
+measurements$Right_Foot[164] <- NA
+
+which((measurements$Armspam >= 300))
+measurements$Armspam[354] <- NA
+
+which((measurements$Index_Finger >= 1000))
+measurements$Index_Finger[259] <- NA
+
+which((measurements$Ring_Finger >= 1000))
+measurements$Ring_Finger[259] <- NA
+
+
+library(mice)
+measurements_imp <- mice(measurements, method = c("cart", "cart", "cart", "cart", "cart", "cart"))
+
+measurements_rub <- with(measurements_imp, exp = lm(Height ~ Right_Foot + Left_Foot + Armspan + Index_Finger + Ring_Finger))
+pool(measurements_rub)
+
+
+```
+
+
+
+
+<br/><br/>
+_• Repeat the previous problem, but use a random forest for imputation in MICE instead of a cart model._
+<br/><br/>
+_• Finally, put your code and results in a github repository. In the ﬁnal version of your homework that you submit to Sakai, the answer to this part will simply be a link to that github repository._
+
+
+
+
+
+
+
+
+
+
+
+
