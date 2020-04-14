@@ -124,6 +124,27 @@ measurements <- school %>%
          Ring_Finger)
 
 #The following code finds and removes some of the most obvious data entry errors 
+summary(measurements)
+```
+
+    ##      Height          Right_Foot        Left_Foot         Armspan      
+    ##  Min.   :    1.8   Min.   :   2.00   Min.   :  2.00   Min.   :  1.88  
+    ##  1st Qu.:  160.0   1st Qu.:  23.00   1st Qu.: 23.00   1st Qu.:154.00  
+    ##  Median :  166.6   Median :  24.00   Median : 24.00   Median :164.00  
+    ##  Mean   :  377.0   Mean   :  31.43   Mean   : 25.18   Mean   :153.39  
+    ##  3rd Qu.:  175.2   3rd Qu.:  26.00   3rd Qu.: 26.00   3rd Qu.:175.00  
+    ##  Max.   :99999.0   Max.   :2426.00   Max.   :160.00   Max.   :431.80  
+    ##  NA's   :38        NA's   :40        NA's   :66       NA's   :55      
+    ##   Index_Finger      Ring_Finger     
+    ##  Min.   :   0.60   Min.   :   0.70  
+    ##  1st Qu.:  28.12   1st Qu.:  38.25  
+    ##  Median :  72.00   Median :  72.00  
+    ##  Mean   :  80.60   Mean   :  77.85  
+    ##  3rd Qu.:  80.00   3rd Qu.:  82.00  
+    ##  Max.   :1000.00   Max.   :1000.00  
+    ##  NA's   :78        NA's   :78
+
+``` r
 which((measurements$Height < 5) | (measurements$Height >= 900))
 ```
 
