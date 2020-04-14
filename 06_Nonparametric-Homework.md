@@ -54,13 +54,13 @@ library(VIM)
 matrixplot(ventus)
 ```
 
-![](06_Nonparametric-Homework_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](06_Nonparametric-Homework_files/figure-gfm/unnamed-chunk-1-1.jpeg)<!-- -->
 
 ``` r
 aggr(ventus, combined = TRUE, numbers = TRUE)
 ```
 
-![](06_Nonparametric-Homework_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+![](06_Nonparametric-Homework_files/figure-gfm/unnamed-chunk-1-2.jpeg)<!-- -->
 
 ``` r
 ventus <- ventus %>%
