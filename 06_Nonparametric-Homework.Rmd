@@ -26,7 +26,7 @@ H~1~: There is a relationship between handedness and favorite season
 <br/><br/>
 The p-value is 0.721. Since the p-value is greater than α = 0.05 we fail to reject the null hypothesis and state that there is no relationship between handedness and favorite season. 
 <br/><br/>
-The data appears to be missing completely at random and would generally be okay to perform complete case analysis. We are left about 90% of the data when we remove missing values. We are testing for independence between two categorical variables, so a chi-square test for independence would be best. 
+The data appears to be missing completely at random and would generally be okay to perform complete case analysis. We are left about 90% of the data when we remove missing values. We are testing for independence between two categorical variables, so a chi-square test for independence would be best. Since the number of permutations would be large, we performed a simulation. 
 
 ```{r message=FALSE, warning=FALSE}
 school <- read.csv("/Users/srmor/OneDrive/Loyola_University_Chicago/Spring_2020/Nonparametric_Statistical_Methods/Lecture_Notes/ill_school_data.csv")
@@ -39,10 +39,6 @@ levels(school$Favorite_Season)[levels(school$Favorite_Season) == ""] <- NA
 ventus <- school %>%
   select(Handed, Favorite_Season) %>%
   rename("Handedness" = "Handed", "Season" = "Favorite_Season")
-
-library(VIM)
-matrixplot(ventus)
-aggr(ventus, combined = TRUE, numbers = TRUE)
 
 ventus <- ventus %>%
   filter(Handedness %in% c("Right-Handed", "Left-Handed", "Ambidextrous"), 
@@ -67,6 +63,8 @@ sum(XsqPerms >= XsqObs) / 1000
 ```
 <br/><br/>
 _• Build a simple linear regression model with height as your response and arm span as your predictor. First, you need to clean the data, then use MICE to impute missing values using a CART model. Estimate the simple linear regression model on each of the compeleted data sets and use Rubin’s combining rules to combined estiamtes across imputations. State your ﬁnal estimates for each of the slope and intercept parameters as well as standard errors for each of these combined estimates._
+<br/><br/>
+The finale estimates for the intercept and each slope are: Intercept = 93.272, Right_Foot = -.110, Left_Foot = .0665, Armspan = .422, Index_Finger = -.0000967, Ring_Finger = .0185. The standard errors are 125.989, .0372, .0295, .004, and .000917, .00112 respectively. 
 
 ```{r message=FALSE, warning=FALSE}
 
@@ -74,28 +72,23 @@ measurements <- school %>%
   mutate(Height = as.numeric(levels(school$Height_cm))[school$Height_cm], 
          Right_Foot = as.numeric(levels(school$Footlength_cm))[school$Footlength_cm],
          Left_Foot = as.numeric(levels(school$Left_Footlength_cm))[school$Left_Footlength_cm], 
-         Armspam = as.numeric(levels(school$Armspan_cm))[school$Armspan_cm],
+         Armspan = as.numeric(levels(school$Armspan_cm))[school$Armspan_cm],
          Index_Finger = as.numeric(levels(school$Index_Fingerlength_mm))[school$Index_Fingerlength_mm],
          Ring_Finger = as.numeric(levels(school$Ring_Fingerlength_mm))[school$Ring_Fingerlength_mm]) %>%
   select(Height,
          Right_Foot,
          Left_Foot,
-         Armspam,
+         Armspan,
          Index_Finger,
          Ring_Finger)
 
 #The following code finds and removes some of the most obvious data entry errors 
-summary(measurements)
-which((measurements$Height < 5) | (measurements$Height >= 900))
+which((measurements$Height >= 900))
 measurements$Height[188] <- NA
-measurements$Height[218] <- NA
 measurements$Height[259] <- NA
 
-which((measurements$Right_Foot >= 1000))
+which((measurements$Right_Foot >= 900))
 measurements$Right_Foot[164] <- NA
-
-which((measurements$Armspam >= 300))
-measurements$Armspam[354] <- NA
 
 which((measurements$Index_Finger >= 1000))
 measurements$Index_Finger[259] <- NA
@@ -103,21 +96,28 @@ measurements$Index_Finger[259] <- NA
 which((measurements$Ring_Finger >= 1000))
 measurements$Ring_Finger[259] <- NA
 
-
 library(mice)
 measurements_imp <- mice(measurements, method = c("cart", "cart", "cart", "cart", "cart", "cart"))
 
-measurements_rub <- with(measurements_imp, exp = lm(Height ~ Right_Foot + Left_Foot + Armspan + Index_Finger + Ring_Finger))
-pool(measurements_rub)
-
+measurements_rbn <- with(measurements_imp, exp = lm(Height ~ Right_Foot + Left_Foot + Armspan + Index_Finger + Ring_Finger))
+round(pool(measurements_rbn)$pooled$estimate, 8)
+round(pool(measurements_rbn)$pooled$t, 8)
 
 ```
 
-
-
-
 <br/><br/>
 _• Repeat the previous problem, but use a random forest for imputation in MICE instead of a cart model._
+<br/><br/>
+The finale estimates for the intercept and each slope are: Intercept = 95.863, Right_Foot = -.169, Left_Foot = .117, Armspan = .402, Index_Finger = .00663, Ring_Finger = .0241 The standard errors are 54.729, .0133, .0189, .00164, .00085, and .0009 respectively. 
+
+```{r}
+measurements_imp <- mice(measurements, method = c("rf", "rf", "rf", "rf", "rf", "rf"))
+
+measurements_rbn <- with(measurements_imp, exp = lm(Height ~ Right_Foot + Left_Foot + Armspan + Index_Finger + Ring_Finger))
+round(pool(measurements_rbn)$pooled$estimate, 8)
+round(pool(measurements_rbn)$pooled$t, 8)
+```
+
 <br/><br/>
 _• Finally, put your code and results in a github repository. In the ﬁnal version of your homework that you submit to Sakai, the answer to this part will simply be a link to that github repository._
 
